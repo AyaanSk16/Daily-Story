@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Daily Story</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f4f4f4; padding:20px; text-align:center; }
+    .story-box { max-width:600px; margin:auto; background:white; padding:20px; border-radius:10px; box-shadow:0 2px 5px rgba(0,0,0,0.2); }
+    h1 { color:#333; }
+    p { font-size:18px; line-height:1.6; }
+  </style>
+</head>
+<body>
+  <div class="story-box">
+    <h1>Today's Story</h1>
+    <p id="story"></p>
+  </div>
+
+  <script>
+    const stories = [
+      "Story 1: Ek chhoti si gaon ki ladki apne sapne ke peeche bhaagti hai...",
+      "Story 2: Ek shahar ka ladka jo jungle me kho jata hai aur wahan dosti karta hai...",
+      "Story 3: Ek magic pen jo likhi gayi baaton ko zinda kar deta hai...",
+      "Story 4: Ek robot jo insano se seekhna chahta hai...",
+      "Story 5: Ek raja jo apne logon ke liye sab kuch kurbaan karta hai...",
+      "Story 6: Ek dost jiska wafadari hi uski sabse badi taakat thi..."
+    ];
+    
+    // Date ke hisaab se story badlegi
+    let today = new Date();
+    let index = today.getDate() % stories.length;
+    document.getElementById("story").innerText = stories[index];
+  </script>
+</body>
+</html>
