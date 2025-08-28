@@ -1,0 +1,465 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Professional Resume Builder (Offline)</title>
+
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
+<!-- html2pdf bundle (html2canvas + jsPDF) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+
+<style>
+  :root{
+    --accent: #2b6ef6;
+    --bg: #f6f8fb;
+    --card: #ffffff;
+    --muted: #6b7280;
+    --text: #0f172a;
+  }
+  *{box-sizing:border-box;font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,'Helvetica Neue',Arial;}
+  body{margin:0;background:var(--bg);color:var(--text);padding:16px;}
+  .app{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 440px;gap:18px;}
+  header{grid-column:1/-1;display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+  header h1{font-size:18px;margin:0}
+  .controls{display:flex;gap:8px;align-items:center}
+  .btn{background:var(--accent);color:white;padding:8px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:600}
+  .btn.ghost{background:transparent;color:var(--text);border:1px solid rgba(0,0,0,0.08)}
+  .panel{background:var(--card);border-radius:12px;padding:14px;box-shadow:0 6px 18px rgba(11,15,30,0.04)}
+  form{display:flex;flex-direction:column;gap:8px}
+  label{font-size:13px;color:var(--muted);margin-top:6px}
+  input[type="text"], input[type="email"], textarea, select{
+    padding:10px;border-radius:8px;border:1px solid #e6e8ee;font-size:14px;outline:none;background:transparent;
+  }
+  textarea{min-height:70px;resize:vertical}
+  .small{font-size:13px;color:var(--muted)}
+  .row{display:flex;gap:8px}
+  .row .col{flex:1}
+  .muted{color:var(--muted);font-size:13px}
+
+  /* Experience list */
+  .items{margin-top:8px;display:flex;flex-direction:column;gap:8px}
+  .item-card{border:1px dashed #e6e8ee;padding:8px;border-radius:8px;background:linear-gradient(180deg, rgba(255,255,255,0.6), rgba(255,255,255,0.4))}
+  .item-card .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:6px}
+
+  /* Preview styles */
+  .previewWrap{position:sticky;top:16px}
+  .resumeCard{width:100%;background:white;border-radius:10px;padding:22px;box-shadow:0 8px 30px rgba(12,15,30,0.06);color:var(--text)}
+  .resumeHeader{display:flex;gap:16px;align-items:center}
+  .avatar{width:86px;height:86px;border-radius:8px;background:linear-gradient(135deg,var(--accent),#0b63d6);display:flex;align-items:center;justify-content:center;color:white;font-weight:700;font-size:28px}
+  .nameTitle{flex:1}
+  .nameTitle h2{margin:0;font-size:20px}
+  .nameTitle p{margin:4px 0;color:var(--muted);font-size:13px}
+  .meta{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+  .meta .chip{background:rgba(0,0,0,0.05);padding:6px 8px;border-radius:8px;font-size:12px;color:var(--muted)}
+
+  .section{margin-top:14px}
+  .section h3{margin:0;font-size:14px;color:var(--accent)}
+  .section .content{margin-top:8px}
+  .twoCol{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .skillTag{display:inline-block;padding:6px 8px;border-radius:999px;background:rgba(0,0,0,0.06);margin:4px 6px 4px 0;font-size:12px}
+
+  /* responsive */
+  @media(max-width:980px){
+    .app{grid-template-columns:1fr; padding-bottom:80px}
+    .previewWrap{position:relative}
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header>
+    <h1>Professional Resume Builder — Offline</h1>
+    <div class="controls">
+      <label class="small">Theme:</label>
+      <input id="themeColor" type="color" value="#2b6ef6" title="Choose accent color" />
+      <button class="btn" onclick="downloadPDF()">Download PDF</button>
+      <button class="btn ghost" onclick="saveLocal()">Save Local</button>
+      <button class="btn ghost" onclick="loadLocal()">Load Local</button>
+      <button class="btn ghost" onclick="resetForm()">Reset</button>
+    </div>
+  </header>
+
+  <!-- Left: Form -->
+  <div class="panel">
+    <form id="mainForm" onsubmit="event.preventDefault();">
+      <div class="row">
+        <div class="col">
+          <label>Full name</label>
+          <input id="fullName" type="text" placeholder="Ex: Rahul Sharma" oninput="updatePreview()" />
+        </div>
+        <div class="col">
+          <label>Job title</label>
+          <input id="jobTitle" type="text" placeholder="Ex: Frontend Developer" oninput="updatePreview()" />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="col">
+          <label>Email</label>
+          <input id="email" type="email" placeholder="name@example.com" oninput="updatePreview()" />
+        </div>
+        <div class="col">
+          <label>Phone</label>
+          <input id="phone" type="text" placeholder="+91 9XXXXXXXXX" oninput="updatePreview()" />
+        </div>
+      </div>
+
+      <label>Location</label>
+      <input id="location" type="text" placeholder="City, State, Country" oninput="updatePreview()" />
+
+      <label>Professional Summary</label>
+      <textarea id="summary" placeholder="Short intro about you (2-3 lines)" oninput="updatePreview()"></textarea>
+
+      <div style="display:flex;gap:8px;align-items:center;">
+        <label style="margin-bottom:0">Education</label>
+        <button type="button" class="btn ghost" onclick="addEducation()">+ Add</button>
+      </div>
+      <div id="educationList" class="items"></div>
+
+      <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
+        <label style="margin-bottom:0">Experience</label>
+        <button type="button" class="btn ghost" onclick="addExperience()">+ Add</button>
+      </div>
+      <div id="experienceList" class="items"></div>
+
+      <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
+        <label style="margin-bottom:0">Projects</label>
+        <button type="button" class="btn ghost" onclick="addProject()">+ Add</button>
+      </div>
+      <div id="projectList" class="items"></div>
+
+      <label>Skills (comma separated)</label>
+      <input id="skills" placeholder="e.g. HTML, CSS, React, Node" oninput="updatePreview()" />
+
+      <label>Hobbies / Interests (comma separated)</label>
+      <input id="hobbies" placeholder="e.g. Photography, Cricket" oninput="updatePreview()" />
+      
+      <label>Languages (comma separated)</label>
+<input id="languages" placeholder="e.g. Hindi, English, Marathi" oninput="updatePreview()" />
+
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button class="btn" type="button" onclick="updatePreview()">Update Preview</button>
+        <button class="btn ghost" type="button" onclick="fillSample()">Fill Sample</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Right: Preview -->
+  <div class="previewWrap">
+    <div class="panel">
+      <div id="resumePreview" class="resumeCard">
+        <!-- Live preview content will be generated by JS -->
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  // Utilities
+  function el(tag, attrs={}, inner=''){ const e=document.createElement(tag); for(const k in attrs){ if(k==='class') e.className=attrs[k]; else e.setAttribute(k, attrs[k]); } e.innerHTML = inner; return e; }
+
+  // Dynamic lists handling
+  function addEducation(data){
+    const container = document.getElementById('educationList');
+    const card = document.createElement('div'); card.className='item-card';
+    card.innerHTML = `
+      <label>Degree / Course</label>
+      <input type="text" class="edu-degree" placeholder="Ex: B.Sc Computer Science" />
+      <div class="row"><input type="text" class="edu-college" placeholder="College / Institute" /><input type="text" class="edu-year" placeholder="Year / Duration" /></div>
+      <div class="actions" style="display:flex;justify-content:flex-end;">
+        <button class="btn ghost" onclick="this.closest('.item-card').remove(); updatePreview()">Remove</button>
+      </div>`;
+    if(data){
+      card.querySelector('.edu-degree').value = data.degree||'';
+      card.querySelector('.edu-college').value = data.institute||'';
+      card.querySelector('.edu-year').value = data.year||'';
+    }
+    container.appendChild(card);
+  }
+
+  function addExperience(data){
+    const container = document.getElementById('experienceList');
+    const card = document.createElement('div'); card.className='item-card';
+    card.innerHTML = `
+      <label>Role / Title</label>
+      <input type="text" class="exp-role" placeholder="Ex: Frontend Developer" />
+      <div class="row"><input type="text" class="exp-company" placeholder="Company" /><input type="text" class="exp-duration" placeholder="Duration" /></div>
+      <label>Responsibilities / Achievements (comma separated)</label>
+      <textarea class="exp-desc" placeholder="Describe work and achievements"></textarea>
+      <div class="actions"><button class="btn ghost" onclick="this.closest('.item-card').remove(); updatePreview()">Remove</button></div>`;
+    if(data){
+      card.querySelector('.exp-role').value = data.role||'';
+      card.querySelector('.exp-company').value = data.company||'';
+      card.querySelector('.exp-duration').value = data.duration||'';
+      card.querySelector('.exp-desc').value = data.desc||'';
+    }
+    container.appendChild(card);
+  }
+
+  function addProject(data){
+    const container = document.getElementById('projectList');
+    const card = document.createElement('div'); card.className='item-card';
+    card.innerHTML = `
+      <label>Project Title</label>
+      <input type="text" class="proj-title" placeholder="Project name" />
+      <label>Link / Tech</label>
+      <input type="text" class="proj-meta" placeholder="GitHub link / Tech used" />
+      <label>Description</label>
+      <textarea class="proj-desc" placeholder="Short description"></textarea>
+      <div class="actions"><button class="btn ghost" onclick="this.closest('.item-card').remove(); updatePreview()">Remove</button></div>`;
+    if(data){
+      card.querySelector('.proj-title').value = data.title||'';
+      card.querySelector('.proj-meta').value = data.meta||'';
+      card.querySelector('.proj-desc').value = data.desc||'';
+    }
+    container.appendChild(card);
+  }
+
+  // Initial add one of each
+  addEducation(); addExperience(); addProject();
+
+  // Update preview
+  function updatePreview(){
+    // theme
+    const accent = document.getElementById('themeColor').value;
+    document.documentElement.style.setProperty('--accent', accent);
+
+    const name = document.getElementById('fullName').value || 'Your Name';
+    const title = document.getElementById('jobTitle').value || 'Job Title';
+    const email = document.getElementById('email').value || '';
+    const phone = document.getElementById('phone').value || '';
+    const location = document.getElementById('location').value || '';
+    const summary = document.getElementById('summary').value || '';
+
+    // Education
+    const eduCards = [...document.querySelectorAll('#educationList .item-card')];
+    const educations = eduCards.map(card=>({
+      degree: card.querySelector('.edu-degree').value,
+      institute: card.querySelector('.edu-college').value,
+      year: card.querySelector('.edu-year').value
+    })).filter(e=>e.degree||e.institute);
+
+    // Experience
+    const expCards = [...document.querySelectorAll('#experienceList .item-card')];
+    const experiences = expCards.map(card=>({
+      role: card.querySelector('.exp-role').value,
+      company: card.querySelector('.exp-company').value,
+      duration: card.querySelector('.exp-duration').value,
+      desc: card.querySelector('.exp-desc').value
+    })).filter(e=>e.role||e.company);
+
+    // Projects
+    const projCards = [...document.querySelectorAll('#projectList .item-card')];
+    const projects = projCards.map(card=>({
+      title: card.querySelector('.proj-title').value,
+      meta: card.querySelector('.proj-meta').value,
+      desc: card.querySelector('.proj-desc').value
+    })).filter(p=>p.title);
+
+    const skills = (document.getElementById('skills').value || '').split(',').map(s=>s.trim()).filter(Boolean);
+    const hobbies = (document.getElementById('hobbies').value || '').split(',').map(s=>s.trim()).filter(Boolean);
+
+    // Build preview HTML
+    const px = [];
+    px.push(`<div class="resumeHeader">`);
+    px.push(`<div class="avatar">${getInitials(name)}</div>`);
+    px.push(`<div class="nameTitle"><h2>${escapeHtml(name)}</h2><p>${escapeHtml(title)}</p>`);
+    px.push(`<div class="meta">`);
+    if(email) px.push(`<div class="chip">${escapeHtml(email)}</div>`);
+    if(phone) px.push(`<div class="chip">${escapeHtml(phone)}</div>`);
+    if(location) px.push(`<div class="chip">${escapeHtml(location)}</div>`);
+    px.push(`</div></div></div>`);
+
+    if(summary) px.push(`<div class="section"><h3>Professional Summary</h3><div class="content">${escapeHtml(summary)}</div></div>`);
+
+    if(educations.length){
+      px.push(`<div class="section"><h3>Education</h3><div class="content">`);
+      educations.forEach(e=>{
+        px.push(`<div style="margin-bottom:8px"><strong>${escapeHtml(e.degree)}</strong> <span class="muted">| ${escapeHtml(e.year||'')}</span><div class="muted">${escapeHtml(e.institute)}</div></div>`);
+      });
+      px.push(`</div></div>`);
+    }
+
+    if(experiences.length){
+      px.push(`<div class="section"><h3>Experience</h3><div class="content">`);
+      experiences.forEach(ex=>{
+        px.push(`<div style="margin-bottom:8px"><strong>${escapeHtml(ex.role)}</strong> <span class="muted">@ ${escapeHtml(ex.company)} • ${escapeHtml(ex.duration)}</span>`);
+        if(ex.desc){
+          const bullets = ex.desc.split(',').map(s=>s.trim()).filter(Boolean);
+          px.push('<ul style="margin:6px 0 0 18px">');
+          bullets.forEach(b=>px.push(`<li style="margin-bottom:4px">${escapeHtml(b)}</li>`));
+          px.push('</ul>');
+        }
+        px.push('</div>');
+      });
+      px.push(`</div></div>`);
+    }
+
+    if(projects.length){
+      px.push(`<div class="section"><h3>Projects</h3><div class="content">`);
+      projects.forEach(p=>{
+        px.push(`<div style="margin-bottom:8px"><strong>${escapeHtml(p.title)}</strong> <div class="muted">${escapeHtml(p.meta)}</div><div>${escapeHtml(p.desc)}</div></div>`);
+      });
+      px.push(`</div></div>`);
+    }
+
+    if(skills.length){
+      px.push(`<div class="section"><h3>Skills</h3><div class="content">`);
+      skills.forEach(s=>px.push(`<span class="skillTag">${escapeHtml(s)}</span>`));
+      px.push(`</div></div>`);
+    }
+
+    if(hobbies.length){
+      px.push(`<div class="section"><h3>Hobbies</h3><div class="content">`);
+      hobbies.forEach(h=>px.push(`<span class="skillTag">${escapeHtml(h)}</span>`));
+      px.push(`</div></div>`);
+    }
+    
+const languages = (document.getElementById('languages').value || '').split(',').map(s=>s.trim()).filter(Boolean);
+if(languages.length){
+  px.push(`<div class="section"><h3>Languages</h3><div class="content">`);
+  languages.forEach(l=>px.push(`<span class="skillTag">${escapeHtml(l)}</span>`));
+  px.push(`</div></div>`);
+}
+
+    document.getElementById('resumePreview').innerHTML = px.join('');
+  }
+
+  function escapeHtml(s){ if(!s) return ''; return String(s).replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;'); }
+  function getInitials(name){ if(!name) return 'Y'; return name.split(' ').map(n=>n[0]).slice(0,2).join('').toUpperCase(); }
+
+  // Save / Load local
+  function saveLocal(){
+    const data = collectFormData();
+    localStorage.setItem('resume_builder_data', JSON.stringify(data));
+    alert('Saved locally ✅');
+  }
+
+  function loadLocal(){
+    const raw = localStorage.getItem('resume_builder_data');
+    if(!raw){ alert('No saved data found'); return; }
+    const data = JSON.parse(raw);
+    populateFormData(data);
+    updatePreview();
+    alert('Loaded saved data ✅');
+  }
+
+  function collectFormData(){
+    const eduCards = [...document.querySelectorAll('#educationList .item-card')];
+    const educations = eduCards.map(card=>({
+      degree: card.querySelector('.edu-degree').value,
+      institute: card.querySelector('.edu-college').value,
+      year: card.querySelector('.edu-year').value
+    }));
+    const expCards = [...document.querySelectorAll('#experienceList .item-card')];
+    const experiences = expCards.map(card=>({
+      role: card.querySelector('.exp-role').value,
+      company: card.querySelector('.exp-company').value,
+      duration: card.querySelector('.exp-duration').value,
+      desc: card.querySelector('.exp-desc').value
+    }));
+    const projCards = [...document.querySelectorAll('#projectList .item-card')];
+    const projects = projCards.map(card=>({
+      title: card.querySelector('.proj-title').value,
+      meta: card.querySelector('.proj-meta').value,
+      desc: card.querySelector('.proj-desc').value
+    }));
+
+    return {
+      meta: {
+        name: document.getElementById('fullName').value,
+        jobTitle: document.getElementById('jobTitle').value,
+        email: document.getElementById('email').value,
+        phone: document.getElementById('phone').value,
+        location: document.getElementById('location').value,
+        summary: document.getElementById('summary').value,
+        skills: document.getElementById('skills').value,
+        hobbies: document.getElementById('hobbies').value,
+        languages: document.getElementById('languages').value,
+        
+        theme: document.getElementById('themeColor').value
+      },
+      educations, experiences, projects
+    };
+  }
+
+  function populateFormData(data){
+    // clear lists first
+    document.getElementById('educationList').innerHTML = '';
+    document.getElementById('experienceList').innerHTML = '';
+    document.getElementById('projectList').innerHTML = '';
+
+    const m = data.meta || {};
+    document.getElementById('fullName').value = m.name || '';
+    document.getElementById('jobTitle').value = m.jobTitle || '';
+    document.getElementById('email').value = m.email || '';
+    document.getElementById('phone').value = m.phone || '';
+    document.getElementById('location').value = m.location || '';
+    document.getElementById('summary').value = m.summary || '';
+    document.getElementById('skills').value = m.skills || '';
+    document.getElementById('hobbies').value = m.hobbies || '';
+    document.getElementById('languages').value = m.languages || '';
+    document.getElementById('themeColor').value = m.theme || '#2b6ef6';
+
+    (data.educations||[]).forEach(e=>addEducation(e));
+    (data.experiences||[]).forEach(e=>addExperience(e));
+    (data.projects||[]).forEach(p=>addProject(p));
+  }
+
+  // Reset to blank
+  function resetForm(){
+    if(!confirm('Reset all fields?')) return;
+    document.getElementById('mainForm').reset();
+    document.getElementById('educationList').innerHTML = '';
+    document.getElementById('experienceList').innerHTML = '';
+    document.getElementById('projectList').innerHTML = '';
+    addEducation(); addExperience(); addProject();
+    updatePreview();
+  }
+
+  // PDF Generation using html2pdf
+  function downloadPDF(){
+    // Ensure preview up-to-date
+    updatePreview();
+    const element = document.getElementById('resumePreview');
+    // small temporary style for PDF size
+    const opt = {
+      margin:       [0.3,0.3,0.3,0.3],
+      filename:     (document.getElementById('fullName').value || 'resume') + '.pdf',
+      image:        { type: 'jpeg', quality: 0.98 },
+      html2canvas:  { scale: 2, useCORS: true, letterRendering: true },
+      jsPDF:        { unit: 'in', format: 'a4', orientation: 'portrait' }
+    };
+    // clone and set white background for PDF clarity
+    html2pdf().set(opt).from(element).save();
+  }
+
+  // Sample fill
+  function fillSample(){
+    document.getElementById('fullName').value = 'Amit Verma';
+    document.getElementById('jobTitle').value = 'Senior Frontend Developer';
+    document.getElementById('email').value = 'amit.verma@example.com';
+    document.getElementById('phone').value = '+91 98765 43210';
+    document.getElementById('location').value = 'Mumbai, India';
+    document.getElementById('summary').value = 'Experienced frontend developer with 6+ years building scalable web apps using React, Next.js and modern JS. Passionate about performance and UX.';
+    document.getElementById('skills').value = 'HTML, CSS, JavaScript, React, Next.js, Tailwind, Git';
+    document.getElementById('hobbies').value = 'Photography, Cycling';
+document.getElementById('languages').value = 'Hindi, English, Marathi';
+    document.getElementById('educationList').innerHTML = ''; addEducation({degree:'B.Tech Computer Science', institute:'XYZ Institute of Tech', year:'2016 - 2020'});
+    document.getElementById('experienceList').innerHTML = ''; addExperience({role:'Senior Frontend Developer', company:'TechCorp Pvt Ltd', duration:'2021 - Present', desc:'Built dashboard, Improved performance by 40%, Mentored juniors'});
+    document.getElementById('projectList').innerHTML = ''; addProject({title:'E-commerce UI', meta:'React, Redux', desc:'Built product catalog and checkout flow'});
+    updatePreview();
+  }
+
+  // init
+  document.getElementById('themeColor').addEventListener('input', updatePreview);
+  updatePreview();
+
+</script>
+</body>
+</html>
