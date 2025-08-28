@@ -1,5 +1,76 @@
-<ul>
-  <li><a href="image-to-pdf.html">Image To PDF</a></li>
-  <li><a href="stories.html">Stories Learning</a></li>
-  <li><a href="resume-pdf.html">Resume-Pdf-Create</a></li>
-</ul>
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Smart World</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d?ixlib=rb-4.0.3&auto=format&fit=crop&w=1740&q=80') no-repeat center center/cover;
+      color: #fff;
+      text-align: center;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .overlay {
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: rgba(0,0,0,0.6);
+      z-index: -1;
+    }
+    .welcome {
+      font-size: 2.5rem;
+      font-weight: bold;
+      margin-bottom: 20px;
+      text-shadow: 0 0 15px #00f0ff, 0 0 25px #00f0ff;
+    }
+    ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    ul li {
+      margin: 15px 0;
+    }
+    ul li a {
+      text-decoration: none;
+      padding: 15px 30px;
+      font-size: 1.2rem;
+      font-weight: bold;
+      color: #fff;
+      border-radius: 12px;
+      background: linear-gradient(145deg, #00c6ff, #0072ff);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+      display: inline-block;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    ul li a:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 25px rgba(0,0,0,0.6);
+    }
+    footer {
+      margin-top: 40px;
+      font-size: 0.9rem;
+      opacity: 0.8;
+    }
+  </style>
+</head>
+<body>
+  <div class="overlay"></div>
+
+  <div class="welcome">🌍 Welcome to Smart World 🌍</div>
+
+  <ul>
+    <li><a href="image-to-pdf.html">Image To PDF</a></li>
+    <li><a href="stories.html">Stories Learning</a></li>
+    <li><a href="resume-pdf.html">Resume PDF Create</a></li>
+  </ul>
+
+  <footer>© 2025 Smart World - Explore, Learn & Create</footer>
+</body>
+</html>
